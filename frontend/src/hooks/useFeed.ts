@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PostType, PaginatedResponse, CommentType } from "../types";
 
 const POST_API = "http://localhost:8000/posts";
@@ -75,21 +75,24 @@ export const useFeed = () => {
     }
   };
 
-  const fetchComments = async (postId: number) => {
-    try {
-      const response = await fetch(COMMENT_API(postId));
-      if (response.ok) {
-        const data: CommentType[] = await response.json();
-        setComments((prev) => ({ ...prev, [postId]: data }));
-        return data;
-      } else {
-        throw new Error("Failed to fetch comments");
+  const fetchComments = useCallback(
+    async (postId: number) => {
+      try {
+        const response = await fetch(`${POST_API}/${postId}/comments`);
+        if (response.ok) {
+          const data: CommentType[] = await response.json();
+          setComments((prev) => ({ ...prev, [postId]: data }));
+          return data;
+        } else {
+          throw new Error("Failed to fetch comments");
+        }
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+        return [];
       }
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-      return [];
-    }
-  };
+    },
+    [] // Ensures fetchComments is memoized
+  );
 
   const addComment = async (
     postId: number,

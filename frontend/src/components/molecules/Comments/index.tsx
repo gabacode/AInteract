@@ -1,3 +1,4 @@
+import { IoSend } from "react-icons/io5"; // Import the icon
 import { useEffect, useState, FormEvent } from "react";
 import { CommentType } from "../../../types";
 import { Avatar } from "../../atoms/Avatar";
@@ -29,7 +30,7 @@ export const Comments = ({
 
   useEffect(() => {
     fetchComments(postId).then(setComments);
-  }, [postId]);
+  }, [postId, fetchComments]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -86,7 +87,7 @@ export const Comments = ({
           className="add-comment-input"
         />
         <button type="submit" className="add-comment-btn">
-          Comment
+          <IoSend size={20} color="#007bff" />
         </button>
       </form>
     </div>

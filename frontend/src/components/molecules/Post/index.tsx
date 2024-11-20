@@ -25,7 +25,7 @@ export const Post = ({
   addComment,
 }: PostProps) => {
   return (
-    <div className="post card">
+    <div className="post">
       <div className="row align-items-start">
         <div className="col-auto pe-0">
           <Avatar src={post.author.avatar || ""} alt={post.author.username} />
