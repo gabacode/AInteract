@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy import func, desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
@@ -34,6 +36,7 @@ def create_post(db: Session, post: PostCreate):
         return db_post
     except SQLAlchemyError as e:
         db.rollback()
+        logging.error(f"Database error: {str(e)}")
         raise ValueError(f"Database error: {str(e)}")
 
 

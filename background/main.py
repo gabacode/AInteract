@@ -1,9 +1,11 @@
 import logging
+import os
 import random
 import string
 import time
 from contextlib import asynccontextmanager
 from threading import Thread
+from ollama import Client
 
 from fastapi import FastAPI, HTTPException
 
@@ -17,6 +19,7 @@ class AIClient:
         self.api = ApiClient("token")
         self.running = False
         self.timeout = 60
+        self.ollama_client = Client(host=os.getenv("OLLAMA_HOST", "http://ollama:11434"))
 
     @staticmethod
     def generate_random_username(length=8):
@@ -26,6 +29,30 @@ class AIClient:
     @staticmethod
     def generate_random_avatar():
         return f"https://i.pravatar.cc/150?img={random.randint(1, 70)}"
+
+    @staticmethod
+    def sanitize_content(content, max_length=500):
+        try:
+            sanitized_content = " ".join(content.split())
+            # if len(sanitized_content) > max_length:
+            #     sanitized_content = sanitized_content[:max_length].rstrip()
+            return sanitized_content
+        except Exception as e:
+            logging.error(f"Error sanitizing content: {e}")
+            return "Content could not be sanitized properly."
+
+    def generate_ai_content(self, prompt, max_length=2048):
+        try:
+            response = self.ollama_client.generate(model="gemma2:latest", prompt=prompt)
+            raw_content = response.get("response", "No content generated.")
+            logging.info(f"Generated AI content: {raw_content}")
+            sanitized_content = self.sanitize_content(raw_content, max_length)
+            return sanitized_content
+        except Exception as e:
+            logging.error(f"Error generating AI content: {e}")
+            return "Thoughts could not be generated."
+
+
 
     def get_ai_authors(self):
         ai_authors = []
@@ -49,7 +76,8 @@ class AIClient:
 
     def add_initial_posts(self, ai_authors):
         for ai_author in ai_authors:
-            post_content = f"{ai_author['username']} shares their first thought!"
+            prompt = f"Imagine {ai_author['username']} is a new AI author on a social media platform. Write an engaging first post for them on a topic of your choice."
+            post_content = self.generate_ai_content(prompt)
             logging.info(f"Adding post: {post_content}")
             self.api.add_post(post_content, ai_author["id"])
 
@@ -60,11 +88,17 @@ class AIClient:
             action = random.choice(["comment", "post"])
             if action == "comment":
                 post = random.choice(posts)
-                ai_comment = f"{ai_author['username']} thinks '{post['content'][:20]}...' is fascinating!"
+                prompt = (
+                    f"As {ai_author['username']}, you are an AI author participating in a vibrant social platform. "
+                    f"Read this post: \"{post['content']}\" and write a very brief, thoughtful, personal comment "
+                    f"that expresses your perspective or adds value to the discussion. Keep it under 100 words."
+                )
+                ai_comment = self.generate_ai_content(prompt, 200)
                 logging.info(f"Adding comment: {ai_comment}")
                 self.api.add_comment(post["id"], ai_comment, ai_author["id"])
             elif action == "post":
-                ai_post = f"{ai_author['username']} has a new thought to share!"
+                prompt = f"Write a new post for {ai_author['username']}."
+                ai_post = self.generate_ai_content(prompt, 500)
                 logging.info(f"Adding post: {ai_post}")
                 self.api.add_post(ai_post, ai_author["id"])
 

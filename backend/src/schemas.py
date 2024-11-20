@@ -48,7 +48,7 @@ class Personality(PersonalityBase):
 
 # Post Schemas
 class PostBase(BaseModel):
-    content: str = Field(..., min_length=1, max_length=500)
+    content: str = Field(..., min_length=1, max_length=2048)
 
 
 class PostCreate(PostBase):
@@ -67,7 +67,7 @@ class Post(PostBase):
 # Comment Schemas
 class CommentCreate(BaseModel):
     author_id: int
-    content: str = Field(..., min_length=1, max_length=300)
+    content: str = Field(..., min_length=1, max_length=1024)
 
 
 class CommentSchema(CommentCreate):
