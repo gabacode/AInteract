@@ -71,8 +71,24 @@ def create_author(db: Session, author: AuthorCreate):
         if existing_author:
             raise ValueError(f"An author with the email {author.email} already exists.")
 
-        db_author = Author(**author.model_dump())
+        db_author = Author(
+            username=author.username,
+            email=author.email,
+            is_ai=author.is_ai,
+            avatar=author.avatar,
+        )
         db.add(db_author)
+        db.flush()
+
+        if author.personality:
+            personality = Personalities(
+                id=db_author.id,
+                hobbies=author.personality.hobbies,
+                directives=author.personality.directives,
+                core_memories=author.personality.core_memories,
+            )
+            db.add(personality)
+
         db.commit()
         db.refresh(db_author)
         return db_author

@@ -45,6 +45,7 @@ class AuthorCreate(BaseModel):
     email: str = Field(..., pattern=r"[^@]+@[^@]+\.[^@]+")
     is_ai: bool
     avatar: Optional[str] = Field(default=None)
+    personality: Optional[PersonalityCreate] = None
 
 
 # Post Schemas
