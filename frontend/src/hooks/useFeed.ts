@@ -44,7 +44,8 @@ export const useFeed = () => {
         body: JSON.stringify({ content, author_id: 1 }),
       });
       if (!response.ok) {
-        throw new Error("Failed to create post");
+        const errorDetails = await response.json();
+        throw new Error(errorDetails?.detail || "Failed to create post");
       }
       const createdPost = await response.json();
       setPosts({

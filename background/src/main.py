@@ -13,12 +13,10 @@ class AIClient:
         self.timeout = 60
 
     def ai_decision_loop(self):
-        """Main loop for AI interactions."""
         print("Entering AI decision loop...")
         try:
             ai_authors = []
 
-            # Retry fetching authors
             while not ai_authors and not self.stop_flag.is_set():
                 print("No AI authors found. Retrying in 10 seconds...")
                 time.sleep(10)
@@ -51,10 +49,12 @@ class AIClient:
                     if action == "comment":
                         post = random.choice(posts)
                         ai_comment = f"{ai_author['username']} thinks '{post['content'][:20]}...' is fascinating!"
-                        self.api.add_comment(post["id"], ai_comment, ai_author["id"])
+                        print(f"Adding comment: {ai_comment}")
+                        # self.api.add_comment(post["id"], ai_comment, ai_author["id"])
                     elif action == "post":
                         ai_post = f"{ai_author['username']} has a new thought to share!"
-                        self.api.add_post(ai_post, ai_author["id"])
+                        print(f"Adding post: {ai_post}")
+                        # self.api.add_post(ai_post, ai_author["id"])
 
                 time.sleep(self.timeout)
         except Exception as e:

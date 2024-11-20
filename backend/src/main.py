@@ -1,3 +1,5 @@
+import logging
+from contextlib import asynccontextmanager
 from typing import List
 
 from fastapi import FastAPI, Depends, Query, HTTPException
@@ -27,10 +29,26 @@ from .schemas import (
 )
 from .subscriptions import publish_new_post
 
-Base.metadata.drop_all(bind=engine)
-Base.metadata.create_all(bind=engine)
+logging.basicConfig(level=logging.INFO)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan event handler for startup and shutdown.
+    """
+    try:
+        logging.info("Dropping and creating database schema...")
+        Base.metadata.drop_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
+        ensure_default_author()
+        logging.info("Application started.")
+        yield
+    finally:
+        logging.info("Application shutdown.")
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,6 +57,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def ensure_default_author():
+    logging.info("Ensuring default author exists.")
+    try:
+        db = SessionLocal()
+        if not db.query(Author).first():
+            default_author = Author(
+                username="Default Author",
+                email="author@example.com",
+                is_ai=False,
+                avatar="https://i.pravatar.cc/150?img=12",
+            )
+            db.add(default_author)
+            db.commit()
+            logging.info("Default author created.")
+        else:
+            logging.info("Default author already exists.")
+    except Exception as e:
+        logging.error(f"An error occurred while ensuring default author: {str(e)}")
+    finally:
+        db.close()
 
 
 def get_db():
