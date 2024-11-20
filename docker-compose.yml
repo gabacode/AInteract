@@ -14,6 +14,18 @@ services:
       DATABASE_URL: postgresql://user:password@db:5432/mydatabase
       REDIS_HOST: redis
 
+  background:
+    build:
+      context: ./background
+    container_name: interact_background
+    depends_on:
+      - db
+      - app
+    volumes:
+      - ./background/src:/app/src
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/mydatabase
+
   db:
     image: postgres:latest
     container_name: interact_db

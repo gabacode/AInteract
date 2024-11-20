@@ -5,7 +5,8 @@ import { useFeed } from "../../../hooks/useFeed";
 import "./index.scss";
 
 const Feed = () => {
-  const { posts, addPost, loading, actions, fetchComments, addComment } = useFeed();
+  const { posts, addPost, loading, actions, fetchComments, addComment } =
+    useFeed();
 
   if (loading) {
     return <div>Loading...</div>;
@@ -14,15 +15,21 @@ const Feed = () => {
   return (
     <div className="feed">
       <CreatePost addPost={addPost} />
-      {posts.results.map((post) => (
-        <Post
-          key={post.id}
-          post={post}
-          actions={actions}
-          fetchComments={fetchComments}
-          addComment={addComment}
-        />
-      ))}
+      {posts.results.length ? (
+        posts.results.map((post) => (
+          <Post
+            key={post.id}
+            post={post}
+            actions={actions}
+            fetchComments={fetchComments}
+            addComment={addComment}
+          />
+        ))
+      ) : (
+        <div className="text-center">
+          <p>🙈 No posts yet...</p>
+        </div>
+      )}
     </div>
   );
 };
