@@ -168,13 +168,13 @@ def list_comments(post_id: int, db: Session = Depends(get_db)):
         )
 
 
-@app.delete("/comments/{comment_id}", status_code=204, tags=["comments"])
-def remove_comment(comment_id: int, db: Session = Depends(get_db)):
+@app.delete("/posts/{post_id}/comments/{comment_id}", status_code=204, tags=["comments"])
+def remove_comment(post_id: int, comment_id: int, db: Session = Depends(get_db)):
     """
-    Delete a specific comment.
+    Delete a specific comment associated with a specific post.
     """
     try:
-        success = delete_comment(db, comment_id)
+        success = delete_comment(db, post_id, comment_id)
         if success:
             return
     except ValueError as e:

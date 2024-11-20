@@ -124,12 +124,16 @@ def get_comments_by_post(db: Session, post_id: int):
         raise ValueError(f"Database error: {str(e)}")
 
 
-def delete_comment(db: Session, comment_id: int) -> bool:
-    """Delete a comment by its ID."""
+def delete_comment(db: Session, post_id: int, comment_id: int) -> bool:
+    """Delete a comment by its ID and post ID."""
     try:
-        comment = db.query(Comment).filter(Comment.id == comment_id).first()
+        comment = (
+            db.query(Comment)
+            .filter(Comment.id == comment_id, Comment.post_id == post_id)
+            .first()
+        )
         if not comment:
-            raise ValueError(f"Comment with ID {comment_id} does not exist.")
+            raise ValueError(f"Comment with ID {comment_id} on Post {post_id} does not exist.")
         db.delete(comment)
         db.commit()
         return True

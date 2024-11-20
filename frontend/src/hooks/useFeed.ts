@@ -118,6 +118,30 @@ export const useFeed = () => {
     return newComment;
   };
 
+  const deleteComment = async (postId: number, commentId: number) => {
+    try {
+      const response = await fetch(
+        `${POST_API}/${postId}/comments/${commentId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        setComments((prev) => ({
+          ...prev,
+          [postId]:
+            prev[postId]?.filter((comment) => comment.id !== commentId) || [],
+        }));
+        return true;
+      } else {
+        throw new Error("Failed to delete comment");
+      }
+    } catch (error) {
+      console.error(`Error deleting comment ${commentId}:`, error);
+      return false;
+    }
+  };
   const actions = [
     {
       label: "Report",
@@ -134,6 +158,22 @@ export const useFeed = () => {
     },
   ];
 
+  const commentActions = [
+    {
+      label: "Report",
+      onClick: (postId: number, commentId: number) => {
+        alert(`Comment ${commentId} on Post ${postId} reported.`);
+      },
+    },
+    {
+      label: "Delete",
+      onClick: (postId: number, commentId: number) => {
+        deleteComment(postId, commentId);
+      },
+      className: "text-danger",
+    },
+  ];
+
   return {
     posts,
     loading,
@@ -142,5 +182,6 @@ export const useFeed = () => {
     addComment,
     comments,
     actions,
+    commentActions,
   };
 };

@@ -5,6 +5,8 @@ import { AuthorDetails } from "../../atoms/AuthorDetails";
 import { PostContent } from "../../atoms/PostContent";
 
 import "./index.scss";
+import { useFeed } from "../../../hooks/useFeed";
+import { DropdownActions } from "../../atoms/DropdownActions";
 
 interface CommentsProps {
   postId: number;
@@ -21,6 +23,7 @@ export const Comments = ({
   fetchComments,
   addComment,
 }: CommentsProps) => {
+  const { commentActions } = useFeed();
   const [comments, setComments] = useState<CommentType[]>([]);
   const [newComment, setNewComment] = useState<string>("");
 
@@ -42,25 +45,36 @@ export const Comments = ({
     }
   };
 
-  const Comment = ({ comment }: { comment: CommentType }) => (
-    <div key={`${postId}_${comment.id}`} className="comment-card">
-      <Avatar src={comment.author.avatar} alt={comment.author.username} />
-      <div>
-        <AuthorDetails
-          username={comment.author.username}
-          isAi={comment.author.is_ai}
-          timestamp={comment.timestamp}
-        />
-        <PostContent content={comment.content} />
+  const Comment = ({ comment }: { comment: CommentType }) => {
+    return (
+      <div key={`${postId}_${comment.id}`} className="comment-card">
+        <Avatar src={comment.author.avatar} alt={comment.author.username} />
+        <div>
+          <AuthorDetails
+            username={comment.author.username}
+            isAi={comment.author.is_ai}
+            timestamp={comment.timestamp}
+          />
+          <PostContent content={comment.content} />
+        </div>
+        <div className="col-auto text-end">
+          <DropdownActions
+            actions={commentActions.map((action) => ({
+              ...action,
+              onClick: () => action.onClick(postId, comment.id),
+            }))}
+            postId={comment.id!}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="comments-section">
       <div className="comments-list">
-        {comments?.map((comment) => (
-          <Comment comment={comment} />
+        {comments.map((comment) => (
+          <Comment key={comment.id} comment={comment} />
         ))}
       </div>
       <form className="add-comment-container" onSubmit={handleSubmit}>
