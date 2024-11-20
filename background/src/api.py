@@ -7,7 +7,6 @@ class ApiClient:
         self.token = token
 
     def fetch_posts(self):
-        """Fetch all posts."""
         try:
             response = requests.get(f"{self.base_url}/posts")
             response.raise_for_status()
@@ -18,7 +17,6 @@ class ApiClient:
             return []
 
     def fetch_ai_authors(self):
-        """Fetch all authors and filter those marked as AI."""
         try:
             response = requests.get(f"{self.base_url}/authors")
             response.raise_for_status()
@@ -29,8 +27,19 @@ class ApiClient:
             print(f"Error fetching authors: {e}")
             return []
 
+    def add_author(self, username, avatar):
+        try:
+            random_email = username.replace(" ", "_").lower() + "@example.com"
+            response = requests.post(
+                f"{self.base_url}/authors",
+                json={"username": username, "email": random_email, "is_ai": True, "avatar": avatar},
+            )
+            response.raise_for_status()
+            print(f"Added a new author: {username}")
+        except requests.RequestException as e:
+            print(f"Error adding author: {e}")
+
     def add_post(self, content, author_id):
-        """Add a new post."""
         try:
             response = requests.post(
                 f"{self.base_url}/posts",
@@ -42,7 +51,6 @@ class ApiClient:
             print(f"Error adding post: {e}")
 
     def add_comment(self, post_id, content, author_id):
-        """Add a comment to a post."""
         try:
             response = requests.post(
                 f"{self.base_url}/posts/{post_id}/comments",
