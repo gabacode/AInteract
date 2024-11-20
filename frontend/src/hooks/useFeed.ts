@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { PostType, PaginatedResponse } from "../types";
+import { PostType, PaginatedResponse, CommentType } from "../types";
 
 const POST_API = "http://localhost:8000/posts";
+const COMMENT_API = (postId: number) => `${POST_API}/${postId}/comments`;
 
 export const useFeed = () => {
   const [posts, setPosts] = useState<PaginatedResponse<PostType>>({
@@ -11,6 +12,7 @@ export const useFeed = () => {
     results: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
+  const [comments, setComments] = useState<Record<number, CommentType[]>>({});
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -61,7 +63,6 @@ export const useFeed = () => {
       });
 
       if (response.ok) {
-        // Remove the deleted post from state
         setPosts({
           ...posts,
           results: posts.results.filter((post) => post.id !== postId),
@@ -74,5 +75,72 @@ export const useFeed = () => {
     }
   };
 
-  return { posts, loading, addPost, deletePost };
+  const fetchComments = async (postId: number) => {
+    try {
+      const response = await fetch(COMMENT_API(postId));
+      if (response.ok) {
+        const data: CommentType[] = await response.json();
+        setComments((prev) => ({ ...prev, [postId]: data }));
+        return data;
+      } else {
+        throw new Error("Failed to fetch comments");
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      return [];
+    }
+  };
+
+  const addComment = async (
+    postId: number,
+    content: string,
+    authorId: number
+  ): Promise<CommentType> => {
+    const response = await fetch(COMMENT_API(postId), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ content, author_id: authorId }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to add comment");
+    }
+
+    const newComment: CommentType = await response.json();
+
+    setComments((prev) => ({
+      ...prev,
+      [postId]: [...(prev[postId] || []), newComment],
+    }));
+
+    return newComment;
+  };
+
+  const actions = [
+    {
+      label: "Report",
+      onClick: (postId: number) => {
+        alert(`Post ${postId} reported.`);
+      },
+    },
+    {
+      label: "Delete",
+      onClick: (postId: number) => {
+        deletePost(postId);
+      },
+      className: "text-danger",
+    },
+  ];
+
+  return {
+    posts,
+    loading,
+    addPost,
+    fetchComments,
+    addComment,
+    comments,
+    actions,
+  };
 };

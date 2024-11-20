@@ -1,14 +1,33 @@
+from typing import List
+
 from fastapi import FastAPI, Depends, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from .crud import get_posts, create_post, get_authors, create_author, delete_post
+from .crud import (
+    get_posts,
+    create_post,
+    get_authors,
+    create_author,
+    delete_post,
+    create_comment,
+    get_comments_by_post,
+    delete_comment,
+)
 from .database import SessionLocal, engine
 from .models import Base, Author
-from .schemas import Post, PostCreate, PaginatedResponse, AuthorBase, AuthorCreate
+from .schemas import (
+    Post,
+    PostCreate,
+    PaginatedResponse,
+    AuthorBase,
+    AuthorCreate,
+    CommentCreate,
+    CommentSchema,
+)
 from .subscriptions import publish_new_post
 
-# Base.metadata.drop_all(bind=engine)
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -34,7 +53,7 @@ def get_db():
 def list_posts(
         db: Session = Depends(get_db),
         skip: int = Query(0, ge=0),
-        limit: int = Query(10, ge=1, le=100)
+        limit: int = Query(10, ge=1, le=100),
 ):
     total_posts = get_posts(db, count_only=True)
     posts = get_posts(db, skip=skip, limit=limit)
@@ -59,8 +78,8 @@ def add_post(post: PostCreate, db: Session = Depends(get_db)):
         raise e
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=str(e)
+            status_code=400,
+            detail=str(e),
         )
 
 
@@ -79,7 +98,7 @@ def remove_post(post_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"An unexpected error occurred: {str(e)}"
+            detail=f"An unexpected error occurred: {str(e)}",
         )
 
 
@@ -87,7 +106,7 @@ def remove_post(post_id: int, db: Session = Depends(get_db)):
 def list_authors(
         db: Session = Depends(get_db),
         skip: int = Query(0, ge=0),
-        limit: int = Query(10, ge=1, le=100)
+        limit: int = Query(10, ge=1, le=100),
 ):
     try:
         total_authors = db.query(Author).count()
@@ -104,7 +123,7 @@ def list_authors(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"An unexpected error occurred: {str(e)}"
+            detail=f"An unexpected error occurred: {str(e)}",
         )
 
 
@@ -115,5 +134,53 @@ def add_author(author: AuthorCreate, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"An unexpected error occurred: {str(e)}"
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
+
+
+@app.post("/posts/{post_id}/comments", response_model=CommentSchema, tags=["comments"])
+def add_comment(post_id: int, comment: CommentCreate, db: Session = Depends(get_db)):
+    """
+    Add a comment to a specific post.
+    """
+    try:
+        return create_comment(db, post_id, comment.author_id, comment.content)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
+
+
+@app.get("/posts/{post_id}/comments", response_model=List[CommentSchema], tags=["comments"])
+def list_comments(post_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve all comments for a specific post.
+    """
+    try:
+        return get_comments_by_post(db, post_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
+
+
+@app.delete("/comments/{comment_id}", status_code=204, tags=["comments"])
+def remove_comment(comment_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a specific comment.
+    """
+    try:
+        success = delete_comment(db, comment_id)
+        if success:
+            return
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}",
         )

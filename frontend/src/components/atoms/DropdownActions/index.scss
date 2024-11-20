@@ -1,0 +1,9 @@
+.dropdown-toggle {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.dropdown-toggle::after {
+  display: none !important;
+}

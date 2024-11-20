@@ -1,0 +1,27 @@
+.comments-section {
+  padding: 15px 0px 15px 0px;
+  border-top: 1px solid #ddd;
+  margin-top: 10px;
+
+  .add-comment-container {
+    display: flex;
+    gap: 10px;
+  }
+
+  .comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .comment-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}

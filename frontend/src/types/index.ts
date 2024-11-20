@@ -34,6 +34,12 @@ type PostType = {
   comments?: CommentType[];
 };
 
+type ActionItem = {
+  label: string;
+  onClick: (postId: number) => void;
+  className?: string;
+};
+
 type PostCreation = {
   content: string;
   authorId: number;
@@ -61,4 +67,5 @@ export type {
   PostCreation,
   ApiResponse,
   PaginatedResponse,
+  ActionItem,
 };

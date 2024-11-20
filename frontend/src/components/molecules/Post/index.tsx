@@ -1,18 +1,29 @@
-import { PostType } from "../../../types";
-import { timesAgo } from "./utils";
+import { ActionItem, CommentType, PostType } from "../../../types";
+import { Comments } from "../Comments";
+import { Avatar } from "../../atoms/Avatar";
+import { AuthorDetails } from "../../atoms/AuthorDetails";
+import { PostContent } from "../../atoms/PostContent";
+import { DropdownActions } from "../../atoms/DropdownActions";
+
 import "./index.scss";
 
-// Main Post Component
 interface PostProps {
   post: PostType;
-  deletePost: (postId: number) => void;
+  actions: ActionItem[];
+  fetchComments: (postId: number) => Promise<CommentType[]>;
+  addComment: (
+    postId: number,
+    content: string,
+    authorId: number
+  ) => Promise<CommentType>;
 }
 
-export const Post = ({ post, deletePost }: PostProps) => {
-  const handleDelete = () => {
-    deletePost(post.id!);
-  };
-
+export const Post = ({
+  post,
+  actions,
+  fetchComments,
+  addComment,
+}: PostProps) => {
   return (
     <div className="post card">
       <div className="row align-items-start">
@@ -26,70 +37,18 @@ export const Post = ({ post, deletePost }: PostProps) => {
             timestamp={post.timestamp}
           />
           <PostContent content={post.content} />
+          {post.id && (
+            <Comments
+              postId={post.id}
+              fetchComments={fetchComments}
+              addComment={addComment}
+            />
+          )}
         </div>
         <div className="col-auto text-end">
-          <DropdownActions onDelete={handleDelete} postId={post.id!} />
+          <DropdownActions actions={actions} postId={post.id!} />
         </div>
       </div>
     </div>
   );
 };
-
-// Avatar Component
-const Avatar = ({ src, alt }: { src: string; alt: string }) => (
-  <img className="avatar" src={src} alt={alt} />
-);
-
-// AuthorDetails Component
-interface AuthorDetailsProps {
-  username: string;
-  isAi: boolean;
-  timestamp: string;
-}
-
-const AuthorDetails = ({ username, isAi, timestamp }: AuthorDetailsProps) => {
-  const classes = `badge ${isAi ? "badge-ai" : "badge-human"}`;
-  return (
-    <small>
-      <b>
-        {username} <span className={classes}>{isAi ? "AI" : "HUMAN"}</span>
-      </b>{" "}
-      {timesAgo(timestamp)}
-    </small>
-  );
-};
-
-// PostContent Component
-interface PostContentProps {
-  content: string;
-}
-const PostContent = ({ content }: PostContentProps) => <p>{content}</p>;
-
-// DropdownActions Component
-interface DropdownActionsProps {
-  onDelete: () => void;
-  postId: number;
-}
-const DropdownActions = ({ onDelete, postId }: DropdownActionsProps) => (
-  <div className="dropdown">
-    <button
-      className="btn btn-light btn-sm dropdown-toggle"
-      type="button"
-      id={`dropdownMenuButton${postId}`}
-      data-bs-toggle="dropdown"
-      aria-expanded="false"
-    >
-      ...
-    </button>
-    <ul
-      className="dropdown-menu"
-      aria-labelledby={`dropdownMenuButton${postId}`}
-    >
-      <li>
-        <button className="dropdown-item text-danger" onClick={onDelete}>
-          Delete
-        </button>
-      </li>
-    </ul>
-  </div>
-);

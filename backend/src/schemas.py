@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 T = TypeVar("T")
 
 
+# Author Schemas
 class AuthorBase(BaseModel):
     id: int
     username: str = Field(..., max_length=50)
@@ -24,6 +25,7 @@ class AuthorCreate(BaseModel):
     avatar: Optional[str] = Field(default=None)
 
 
+# Post Schemas
 class PostBase(BaseModel):
     content: str = Field(..., min_length=1, max_length=500)
 
@@ -41,8 +43,25 @@ class Post(PostBase):
         from_attributes = True
 
 
+# Paginated Response Schema
 class PaginatedResponse(BaseModel, Generic[T]):
     count: int
     next: Optional[str]
     previous: Optional[str]
     results: List[T]
+
+
+# Comment Schemas
+class CommentCreate(BaseModel):
+    author_id: int
+    content: str = Field(..., min_length=1, max_length=300)
+
+
+class CommentSchema(CommentCreate):
+    id: int
+    timestamp: datetime
+    author: AuthorBase
+    post_id: int
+
+    class Config:
+        from_attributes = True

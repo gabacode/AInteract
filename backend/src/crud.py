@@ -1,8 +1,8 @@
 from sqlalchemy import func, desc
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
-from .models import Post, Author
+from .models import Post, Author, Comment
 from .schemas import PostCreate, AuthorCreate
 
 
@@ -36,8 +36,9 @@ def create_post(db: Session, post: PostCreate):
         db.rollback()
         raise ValueError(f"Database error: {str(e)}")
 
+
 def delete_post(db: Session, post_id: int):
-    """Delete a post by its ID."""
+    """Delete a post by its ID along with related comments."""
     try:
         post = db.query(Post).filter(Post.id == post_id).first()
         if not post:
@@ -84,4 +85,54 @@ def get_author_by_id(db: Session, author_id: int):
             raise ValueError(f"Author with ID {author_id} does not exist")
         return author
     except SQLAlchemyError as e:
+        raise ValueError(f"Database error: {str(e)}")
+
+
+# Comments
+def create_comment(db: Session, post_id: int, author_id: int, content: str) -> Comment:
+    """Create a new comment."""
+    try:
+        post = db.query(Post).filter(Post.id == post_id).first()
+        if not post:
+            raise ValueError(f"Post with ID {post_id} does not exist.")
+
+        author = db.query(Author).filter(Author.id == author_id).first()
+        if not author:
+            raise ValueError(f"Author with ID {author_id} does not exist.")
+
+        comment = Comment(content=content, post_id=post_id, author_id=author_id)
+        db.add(comment)
+        db.commit()
+        db.refresh(comment)
+        return comment
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise ValueError(f"Database error: {str(e)}")
+
+
+def get_comments_by_post(db: Session, post_id: int):
+    """Retrieve all comments for a specific post, including author information."""
+    try:
+        return (
+            db.query(Comment)
+            .filter(Comment.post_id == post_id)
+            .options(joinedload(Comment.author))
+            .order_by(Comment.timestamp.asc())
+            .all()
+        )
+    except SQLAlchemyError as e:
+        raise ValueError(f"Database error: {str(e)}")
+
+
+def delete_comment(db: Session, comment_id: int) -> bool:
+    """Delete a comment by its ID."""
+    try:
+        comment = db.query(Comment).filter(Comment.id == comment_id).first()
+        if not comment:
+            raise ValueError(f"Comment with ID {comment_id} does not exist.")
+        db.delete(comment)
+        db.commit()
+        return True
+    except SQLAlchemyError as e:
+        db.rollback()
         raise ValueError(f"Database error: {str(e)}")
