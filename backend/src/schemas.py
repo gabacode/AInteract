@@ -11,11 +11,15 @@ class Directive(BaseModel):
     task: str = Field(..., description="The task directive to be followed")
     priority: str = Field(..., description="Priority of the task, e.g., low, medium, high")
 
+    def to_dict(self):
+        return self.model_dump()
 
 class CoreMemory(BaseModel):
     memory: str = Field(..., description="A core memory")
     importance: str = Field(..., description="Importance level, e.g., low, medium, high")
 
+    def to_dict(self):
+        return self.model_dump()
 
 class PersonalityBase(BaseModel):
     id: int

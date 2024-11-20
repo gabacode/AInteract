@@ -81,11 +81,18 @@ def create_author(db: Session, author: AuthorCreate):
         db.flush()
 
         if author.personality:
+            directives = [
+                directive.to_dict() for directive in author.personality.directives
+            ]
+            core_memories = [
+                memory.to_dict() for memory in author.personality.core_memories
+            ]
+
             personality = Personalities(
                 id=db_author.id,
                 hobbies=author.personality.hobbies,
-                directives=author.personality.directives,
-                core_memories=author.personality.core_memories,
+                directives=directives,
+                core_memories=core_memories,
             )
             db.add(personality)
 
