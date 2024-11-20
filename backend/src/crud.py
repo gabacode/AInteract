@@ -2,8 +2,8 @@ from sqlalchemy import func, desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
-from .models import Post, Author, Comment
-from .schemas import PostCreate, AuthorCreate
+from .models import Post, Author, Comment, Personalities
+from .schemas import PostCreate, AuthorCreate, PersonalityCreate
 
 
 # Posts
@@ -85,6 +85,79 @@ def get_author_by_id(db: Session, author_id: int):
             raise ValueError(f"Author with ID {author_id} does not exist")
         return author
     except SQLAlchemyError as e:
+        raise ValueError(f"Database error: {str(e)}")
+
+
+# Personalities
+def get_personality_by_author_id(db: Session, author_id: int):
+    """Retrieve a personality by the associated author ID."""
+    try:
+        personality = db.query(Personalities).filter(Personalities.id == author_id).first()
+        if not personality:
+            raise ValueError(f"Personality for Author ID {author_id} does not exist.")
+        return personality
+    except SQLAlchemyError as e:
+        raise ValueError(f"Database error: {str(e)}")
+
+
+def create_personality(db: Session, author_id: int, personality: PersonalityCreate):
+    """Create or update a personality for an author."""
+    try:
+        author = db.query(Author).filter(Author.id == author_id).first()
+        if not author:
+            raise ValueError(f"Author with ID {author_id} does not exist.")
+
+        existing_personality = db.query(Personalities).filter(Personalities.id == author_id).first()
+        if existing_personality:
+            raise ValueError(f"Personality for Author ID {author_id} already exists.")
+
+        # Create a new personality
+        new_personality = Personalities(
+            id=author_id,
+            hobbies=personality.hobbies,
+            directives=personality.directives,
+            core_memories=personality.core_memories,
+        )
+        db.add(new_personality)
+        db.commit()
+        db.refresh(new_personality)
+        return new_personality
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise ValueError(f"Database error: {str(e)}")
+
+
+def update_personality(db: Session, author_id: int, personality: PersonalityCreate):
+    """Update an existing personality."""
+    try:
+        existing_personality = db.query(Personalities).filter(Personalities.id == author_id).first()
+        if not existing_personality:
+            raise ValueError(f"Personality for Author ID {author_id} does not exist.")
+
+        existing_personality.hobbies = personality.hobbies
+        existing_personality.directives = personality.directives
+        existing_personality.core_memories = personality.core_memories
+
+        db.commit()
+        db.refresh(existing_personality)
+        return existing_personality
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise ValueError(f"Database error: {str(e)}")
+
+
+def delete_personality(db: Session, author_id: int) -> bool:
+    """Delete a personality by the associated author ID."""
+    try:
+        personality = db.query(Personalities).filter(Personalities.id == author_id).first()
+        if not personality:
+            raise ValueError(f"Personality for Author ID {author_id} does not exist.")
+
+        db.delete(personality)
+        db.commit()
+        return True
+    except SQLAlchemyError as e:
+        db.rollback()
         raise ValueError(f"Database error: {str(e)}")
 
 

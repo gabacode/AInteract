@@ -15,7 +15,7 @@ from .crud import (
     delete_post,
     create_comment,
     get_comments_by_post,
-    delete_comment,
+    delete_comment, update_personality, delete_personality, create_personality, get_personality_by_author_id,
 )
 from .database import SessionLocal, engine
 from .models import Base, Author, Personalities
@@ -26,7 +26,7 @@ from .schemas import (
     AuthorBase,
     AuthorCreate,
     CommentCreate,
-    CommentSchema,
+    CommentSchema, Personality, PersonalityCreate,
 )
 from .subscriptions import publish_new_post
 
@@ -194,6 +194,20 @@ def list_authors(
         )
 
 
+@app.get("/authors/{author_id}", response_model=AuthorBase, tags=["authors"])
+def get_author(author_id: int, db: Session = Depends(get_db)):
+    try:
+        author = db.query(Author).filter(Author.id == author_id).first()
+        if not author:
+            raise HTTPException(status_code=404, detail=f"Author with ID {author_id} not found.")
+        return author
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
+
+
 @app.post("/authors", response_model=AuthorBase, tags=["authors"])
 def add_author(author: AuthorCreate, db: Session = Depends(get_db)):
     try:
@@ -242,6 +256,72 @@ def remove_comment(post_id: int, comment_id: int, db: Session = Depends(get_db))
     """
     try:
         success = delete_comment(db, post_id, comment_id)
+        if success:
+            return
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
+
+
+@app.get("/personalities/{author_id}", response_model=Personality, tags=["personalities"])
+def get_personality(author_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a personality by the associated author ID.
+    """
+    try:
+        return get_personality_by_author_id(db, author_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
+
+
+@app.post("/personalities/{author_id}", response_model=Personality, tags=["personalities"])
+def add_personality(author_id: int, personality: PersonalityCreate, db: Session = Depends(get_db)):
+    """
+    Create a personality for an existing author.
+    """
+    try:
+        return create_personality(db, author_id, personality)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
+
+
+@app.put("/personalities/{author_id}", response_model=Personality, tags=["personalities"])
+def update_personality_endpoint(author_id: int, personality: PersonalityCreate, db: Session = Depends(get_db)):
+    """
+    Update an existing personality for an author.
+    """
+    try:
+        return update_personality(db, author_id, personality)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
+
+
+@app.delete("/personalities/{author_id}", status_code=204, tags=["personalities"])
+def remove_personality(author_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a personality associated with a specific author ID.
+    """
+    try:
+        success = delete_personality(db, author_id)
         if success:
             return
     except ValueError as e:

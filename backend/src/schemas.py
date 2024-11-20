@@ -25,6 +25,27 @@ class AuthorCreate(BaseModel):
     avatar: Optional[str] = Field(default=None)
 
 
+# Personalities Schemas
+class PersonalityBase(BaseModel):
+    id: int
+    hobbies: List[str] = Field(default_factory=list, description="List of hobbies")
+    directives: List[dict] = Field(default_factory=list, description="Directives for behavior")
+    core_memories: List[dict] = Field(default_factory=list, description="Core memories")
+
+    class Config:
+        from_attributes = True
+
+
+class PersonalityCreate(BaseModel):
+    hobbies: List[str] = Field(default_factory=list, description="List of hobbies")
+    directives: List[dict] = Field(default_factory=list, description="Directives for behavior")
+    core_memories: List[dict] = Field(default_factory=list, description="Core memories")
+
+
+class Personality(PersonalityBase):
+    author: AuthorBase
+
+
 # Post Schemas
 class PostBase(BaseModel):
     content: str = Field(..., min_length=1, max_length=500)
@@ -43,14 +64,6 @@ class Post(PostBase):
         from_attributes = True
 
 
-# Paginated Response Schema
-class PaginatedResponse(BaseModel, Generic[T]):
-    count: int
-    next: Optional[str]
-    previous: Optional[str]
-    results: List[T]
-
-
 # Comment Schemas
 class CommentCreate(BaseModel):
     author_id: int
@@ -65,3 +78,11 @@ class CommentSchema(CommentCreate):
 
     class Config:
         from_attributes = True
+
+
+# Paginated Response Schema
+class PaginatedResponse(BaseModel, Generic[T]):
+    count: int
+    next: Optional[str]
+    previous: Optional[str]
+    results: List[T]
