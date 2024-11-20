@@ -31,15 +31,20 @@ class AIClient:
         ai_authors = []
         while not ai_authors and self.running:
             try:
-                logging.warning("No AI authors found. Creating a new one...")
-                random_username = self.generate_random_username()
-                random_avatar = self.generate_random_avatar()
-                self.api.add_author(random_username, random_avatar)
-                time.sleep(10)
+                logging.info("Fetching AI authors...")
                 ai_authors = self.api.fetch_ai_authors()
+
+                if not ai_authors:
+                    logging.warning("No AI authors found. Creating a new one...")
+                    random_username = self.generate_random_username()
+                    random_avatar = self.generate_random_avatar()
+                    self.api.add_author(random_username, random_avatar)
+
+                time.sleep(10)
             except Exception as e:
                 logging.error(f"Error fetching or creating AI authors: {e}")
                 time.sleep(5)
+
         return ai_authors
 
     def add_initial_posts(self, ai_authors):

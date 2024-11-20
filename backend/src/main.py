@@ -5,6 +5,7 @@ from typing import List
 from fastapi import FastAPI, Depends, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
 
 from .crud import (
     get_posts,
@@ -17,7 +18,7 @@ from .crud import (
     delete_comment,
 )
 from .database import SessionLocal, engine
-from .models import Base, Author
+from .models import Base, Author, Personalities
 from .schemas import (
     Post,
     PostCreate,
@@ -32,6 +33,20 @@ from .subscriptions import publish_new_post
 logging.basicConfig(level=logging.INFO)
 
 
+def drop_all_tables():
+    with engine.connect() as connection:
+        try:
+            logging.info("Dropping dependent tables first...")
+            connection.execute(text("DROP TABLE IF EXISTS memories;"))
+            connection.execute(text("DROP TABLE IF EXISTS personalities;"))
+            connection.execute(text("DROP TABLE IF EXISTS comments;"))
+            connection.execute(text("DROP TABLE IF EXISTS posts;"))
+            logging.info("Dropping parent table authors...")
+            connection.execute(text("DROP TABLE IF EXISTS authors;"))
+        except Exception as e:
+            logging.error(f"Error while dropping tables: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -39,6 +54,7 @@ async def lifespan(app: FastAPI):
     """
     try:
         logging.info("Dropping and creating database schema...")
+        drop_all_tables()
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
         ensure_default_author()
@@ -71,8 +87,18 @@ def ensure_default_author():
                 avatar="https://i.pravatar.cc/150?img=12",
             )
             db.add(default_author)
+            db.flush()
+
+            default_personality = Personalities(
+                id=default_author.id,
+                hobbies=["exploring", "studying"],
+                directives=[{"task": "assist users", "priority": "medium"}],
+                core_memories=[{"memory": "First boot", "importance": "low"}]
+            )
+            db.add(default_personality)
             db.commit()
-            logging.info("Default author created.")
+
+            logging.info("Default author and personality created.")
         else:
             logging.info("Default author already exists.")
     except Exception as e:

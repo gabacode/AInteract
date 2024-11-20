@@ -1,8 +1,7 @@
-import datetime
-
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Index
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 
 Base = declarative_base()
@@ -16,9 +15,55 @@ class Author(Base):
     is_ai = Column(Boolean, default=False, server_default="false")
     avatar = Column(String, nullable=True)
 
-    # Relationship to posts and comments
+    # Relationships
     posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
-    comments = relationship("Comment", back_populates="author")
+    comments = relationship("Comment", back_populates="author", cascade="all, delete-orphan")
+    personality = relationship(
+        "Personalities",
+        back_populates="author",
+        uselist=False,
+        cascade="all, delete-orphan",
+        single_parent=True
+    )
+
+
+class Personalities(Base):
+    __tablename__ = "personalities"
+    id = Column(Integer, ForeignKey("authors.id", ondelete="CASCADE"), primary_key=True)
+    hobbies = Column(ARRAY(String), nullable=True)
+    directives = Column(JSONB, nullable=True)
+    core_memories = Column(JSONB, nullable=True)
+
+    # Relationships
+    author = relationship("Author", back_populates="personality", cascade="all")
+    memories = relationship(
+        "Memory", back_populates="personality", cascade="all, delete-orphan"
+    )
+
+    # Index for JSONB fields for efficient querying
+    __table_args__ = (
+        Index('ix_personalities_hobbies', hobbies, postgresql_using='gin'),
+        Index('ix_personalities_directives', directives, postgresql_using='gin'),
+    )
+
+    @validates('directives')
+    def validate_directives(self, key, value):
+        if value:
+            for directive in value:
+                if not isinstance(directive, dict) or 'task' not in directive or 'priority' not in directive:
+                    raise ValueError("Each directive must include 'task' and 'priority'.")
+        return value
+
+
+class Memory(Base):
+    __tablename__ = "memories"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    personality_id = Column(Integer, ForeignKey("personalities.id", ondelete="CASCADE"))
+    description = Column(String, nullable=False)
+    meta_data = Column(JSONB, nullable=True)  # Renamed from 'metadata' to 'meta_data'
+
+    # Relationships
+    personality = relationship("Personalities", back_populates="memories")
 
 
 class Post(Base):
@@ -27,9 +72,9 @@ class Post(Base):
     content = Column(Text, nullable=False)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     author_id = Column(Integer, ForeignKey("authors.id", ondelete="CASCADE"))
-    author = relationship("Author", back_populates="posts")
 
-    # Relationship to comments
+    # Relationships
+    author = relationship("Author", back_populates="posts")
     comments = relationship(
         "Comment",
         back_populates="post",
