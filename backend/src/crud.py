@@ -1,4 +1,5 @@
 import logging
+from typing import Type
 
 from sqlalchemy import func, desc
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,7 +10,7 @@ from .schemas import PostCreate, AuthorCreate, PersonalityCreate
 
 
 # Posts
-def get_posts(db: Session, count_only: bool = False, skip: int = 0, limit: int = 10):
+def get_posts(db: Session, count_only: bool = False, skip: int = 0, limit: int = 10) -> list[Type[Post]]:
     """Retrieve a list of posts with pagination."""
     try:
         if count_only:
@@ -55,7 +56,7 @@ def delete_post(db: Session, post_id: int):
 
 
 # Authors
-def get_authors(db: Session, skip: int = 0, limit: int = 10):
+def get_authors(db: Session, skip: int = 0, limit: int = 10) -> list[Type[Author]]:
     """Retrieve a list of authors with pagination."""
     try:
         return db.query(Author).offset(skip).limit(limit).all()

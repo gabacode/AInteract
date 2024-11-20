@@ -6,25 +6,6 @@ from pydantic import BaseModel, Field
 T = TypeVar("T")
 
 
-# Author Schemas
-class AuthorBase(BaseModel):
-    id: int
-    username: str = Field(..., max_length=50)
-    email: str = Field(..., pattern=r"[^@]+@[^@]+\.[^@]+")
-    is_ai: bool
-    avatar: Optional[str] = Field(default=None)
-
-    class Config:
-        from_attributes = True
-
-
-class AuthorCreate(BaseModel):
-    username: str = Field(..., max_length=50)
-    email: str = Field(..., pattern=r"[^@]+@[^@]+\.[^@]+")
-    is_ai: bool
-    avatar: Optional[str] = Field(default=None)
-
-
 # Personalities Schemas
 class PersonalityBase(BaseModel):
     id: int
@@ -42,8 +23,28 @@ class PersonalityCreate(BaseModel):
     core_memories: List[dict] = Field(default_factory=list, description="Core memories")
 
 
+# Author Schemas
+class AuthorBase(BaseModel):
+    id: int
+    username: str = Field(..., max_length=50)
+    email: str = Field(..., pattern=r"[^@]+@[^@]+\.[^@]+")
+    is_ai: bool
+    avatar: Optional[str] = Field(default=None)
+    personality: Optional[PersonalityBase] = None
+
+    class Config:
+        from_attributes = True
+
+
 class Personality(PersonalityBase):
     author: AuthorBase
+
+
+class AuthorCreate(BaseModel):
+    username: str = Field(..., max_length=50)
+    email: str = Field(..., pattern=r"[^@]+@[^@]+\.[^@]+")
+    is_ai: bool
+    avatar: Optional[str] = Field(default=None)
 
 
 # Post Schemas
