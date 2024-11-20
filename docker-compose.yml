@@ -6,8 +6,10 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       - ./backend/src:/app/src
     environment:
@@ -22,8 +24,10 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-      - db
-      - app
+      db:
+        condition: service_healthy
+      app:
+        condition: service_started
     volumes:
       - ./background:/app
     environment:
@@ -43,12 +47,22 @@ services:
       - "5432:5432"
     volumes:
       - interact_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d mydatabase" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:latest
     container_name: interact_redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
 
 volumes:
   interact_data:

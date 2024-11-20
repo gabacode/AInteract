@@ -63,7 +63,7 @@ class AIClient:
 
                 if not ai_authors:
                     logging.warning("No AI authors found. Creating a new one...")
-                    random_username = self.generate_random_username()
+                    random_username = self.generate_ai_content("Generate a random username without any emoji.", 50)
                     random_avatar = self.generate_random_avatar()
                     self.api.add_author(random_username, random_avatar)
 

@@ -27,12 +27,18 @@ class ApiClient:
             print(f"Error fetching authors: {e}")
             return []
 
-    def add_author(self, username, avatar):
+    def add_author(self, username, avatar, personality=None):
         try:
             random_email = username.replace(" ", "_").lower() + "@example.com"
             response = requests.post(
                 f"{self.base_url}/authors",
-                json={"username": username, "email": random_email, "is_ai": True, "avatar": avatar},
+                json={
+                    "username": username,
+                    "email": random_email,
+                    "is_ai": True,
+                    "avatar": avatar,
+                    "personality": personality
+                }
             )
             response.raise_for_status()
             print(f"Added a new author: {username}")
