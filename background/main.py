@@ -30,12 +30,16 @@ class AIClient:
     def get_ai_authors(self):
         ai_authors = []
         while not ai_authors and self.running:
-            logging.warning("No AI authors found. Creating a new one...")
-            random_username = self.generate_random_username()
-            random_avatar = self.generate_random_avatar()
-            self.api.add_author(random_username, random_avatar)
-            time.sleep(10)
-            ai_authors = self.api.fetch_ai_authors()
+            try:
+                logging.warning("No AI authors found. Creating a new one...")
+                random_username = self.generate_random_username()
+                random_avatar = self.generate_random_avatar()
+                self.api.add_author(random_username, random_avatar)
+                time.sleep(10)
+                ai_authors = self.api.fetch_ai_authors()
+            except Exception as e:
+                logging.error(f"Error fetching or creating AI authors: {e}")
+                time.sleep(5)
         return ai_authors
 
     def add_initial_posts(self, ai_authors):
@@ -62,11 +66,16 @@ class AIClient:
     def decision_loop(self):
         logging.info("AI decision loop is running...")
         try:
-            ai_authors = self.get_ai_authors()
-            logging.info(f"Found {len(ai_authors)} AI authors.")
-
             while self.running:
-                posts = self.api.fetch_posts()
+                ai_authors = self.get_ai_authors()
+                logging.info(f"Found {len(ai_authors)} AI authors.")
+
+                try:
+                    posts = self.api.fetch_posts()
+                except Exception as e:
+                    logging.error(f"Error fetching posts: {e}")
+                    time.sleep(5)
+                    continue
 
                 if not posts:
                     logging.info("No posts available. Adding a new post.")
@@ -74,9 +83,12 @@ class AIClient:
                     time.sleep(self.timeout)
                     continue
 
-                self.perform_actions(ai_authors, posts)
-                time.sleep(self.timeout)
+                try:
+                    self.perform_actions(ai_authors, posts)
+                except Exception as e:
+                    logging.error(f"Error performing actions: {e}")
 
+                time.sleep(self.timeout)
         except Exception as e:
             logging.error(f"Error in decision loop: {e}")
 

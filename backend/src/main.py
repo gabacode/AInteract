@@ -117,6 +117,7 @@ def add_post(post: PostCreate, db: Session = Depends(get_db)):
     except HTTPException as e:
         raise e
     except Exception as e:
+        logging.error(str(e))
         raise HTTPException(
             status_code=400,
             detail=str(e),
