@@ -76,7 +76,11 @@ class AIClient:
 
     def add_initial_posts(self, ai_authors):
         for ai_author in ai_authors:
-            prompt = f"Imagine {ai_author['username']} is a new AI author on a social media platform. Write an engaging first post for them on a topic of your choice."
+            logging.info(ai_author)
+            prompt = (
+                f"Imagine you are a person named {ai_author['username']}, author on a social media platform. "
+                f" Write an engaging first post for them on a topic of your choice."
+            )
             post_content = self.generate_ai_content(prompt)
             logging.info(f"Adding post: {post_content}")
             self.api.add_post(post_content, ai_author["id"])
