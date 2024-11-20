@@ -2,15 +2,14 @@ import logging
 import random
 import string
 import time
+from contextlib import asynccontextmanager
 from threading import Thread
 
 from fastapi import FastAPI, HTTPException
 
-from .api import ApiClient
+from lib import ApiClient
 
 logging.basicConfig(level=logging.INFO)
-
-app = FastAPI()
 
 
 class AIClient:
@@ -96,6 +95,20 @@ class AIClient:
 
 
 client = AIClient()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logging.info("Application is starting up. Launching AI client...")
+    client.start()
+    try:
+        yield
+    finally:
+        logging.info("Application is shutting down. Stopping AI client...")
+        client.stop()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.post("/start")

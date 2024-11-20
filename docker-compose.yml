@@ -25,10 +25,10 @@ services:
       - db
       - app
     volumes:
-      - ./background/src:/app/src
+      - ./background:/app
     environment:
       DATABASE_URL: postgresql://user:password@db:5432/mydatabase
-    command: uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
     # command: tail -f /dev/null
 
   db:
