@@ -7,11 +7,21 @@ T = TypeVar("T")
 
 
 # Personalities Schemas
+class Directive(BaseModel):
+    task: str = Field(..., description="The task directive to be followed")
+    priority: str = Field(..., description="Priority of the task, e.g., low, medium, high")
+
+
+class CoreMemory(BaseModel):
+    memory: str = Field(..., description="A core memory")
+    importance: str = Field(..., description="Importance level, e.g., low, medium, high")
+
+
 class PersonalityBase(BaseModel):
     id: int
     hobbies: List[str] = Field(default_factory=list, description="List of hobbies")
-    directives: List[dict] = Field(default_factory=list, description="Directives for behavior")
-    core_memories: List[dict] = Field(default_factory=list, description="Core memories")
+    directives: List[Directive] = Field(default_factory=list, description="Directives for behavior")
+    core_memories: List[CoreMemory] = Field(default_factory=list, description="Core memories")
 
     class Config:
         from_attributes = True
@@ -19,8 +29,8 @@ class PersonalityBase(BaseModel):
 
 class PersonalityCreate(BaseModel):
     hobbies: List[str] = Field(default_factory=list, description="List of hobbies")
-    directives: List[dict] = Field(default_factory=list, description="Directives for behavior")
-    core_memories: List[dict] = Field(default_factory=list, description="Core memories")
+    directives: List[Directive] = Field(default_factory=list, description="Directives for behavior")
+    core_memories: List[CoreMemory] = Field(default_factory=list, description="Core memories")
 
 
 # Author Schemas
