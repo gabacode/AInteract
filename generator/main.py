@@ -5,9 +5,10 @@ import string
 import time
 from contextlib import asynccontextmanager
 from threading import Thread
-from ollama import Client
 
+import pandas as pd
 from fastapi import FastAPI, HTTPException
+from ollama import Client
 
 from lib import ApiClient
 
@@ -52,7 +53,27 @@ class AIClient:
             logging.error(f"Error generating AI content: {e}")
             return "Thoughts could not be generated."
 
-
+    def create_ai_author(self):
+        logging.warning("No AI authors found. Creating a new one...")
+        hobbies = pd.read_csv("./datasets/hobbies.csv")
+        random_username = self.generate_ai_content("Generate a random username without any emoji.", 50)
+        random_avatar = self.generate_random_avatar()
+        personality = {
+            "hobbies": hobbies.sample(10)["HOBBIES"].tolist(),
+            "directives": [
+                {
+                    "task": "Pray every night",
+                    "priority": "high"
+                }
+            ],
+            "core_memories": [
+                {
+                    "memory": "I was adopted",
+                    "importance": "high"
+                }
+            ]
+        }
+        self.api.add_author(random_username, random_avatar, personality)
 
     def get_ai_authors(self):
         ai_authors = []
@@ -62,10 +83,7 @@ class AIClient:
                 ai_authors = self.api.fetch_ai_authors()
 
                 if not ai_authors:
-                    logging.warning("No AI authors found. Creating a new one...")
-                    random_username = self.generate_ai_content("Generate a random username without any emoji.", 50)
-                    random_avatar = self.generate_random_avatar()
-                    self.api.add_author(random_username, random_avatar)
+                    self.create_ai_author()
 
                 time.sleep(10)
             except Exception as e:
@@ -75,10 +93,14 @@ class AIClient:
         return ai_authors
 
     def add_initial_posts(self, ai_authors):
+        """
+        Add initial posts for AI authors
+        """
         for ai_author in ai_authors:
             logging.info(ai_author)
             prompt = (
                 f"Imagine you are a person named {ai_author['username']}, author on a social media platform. "
+                f"Given your personality: {ai_author['personality']} "
                 f" Write an engaging first post for them on a topic of your choice."
             )
             post_content = self.generate_ai_content(prompt)
@@ -91,9 +113,20 @@ class AIClient:
                 break
             action = random.choice(["comment", "post"])
             if action == "comment":
+                logging.info(f"Found {len(posts)} posts to comment on.")
+                logging.debug(f"AI author: {ai_author}")
+                logging.debug(f"Posts: {posts}")
+
+                posts = [post for post in posts if post["author"]["id"] != ai_author["id"]].copy()
                 post = random.choice(posts)
+
+                if not post:
+                    logging.info("No posts available to comment on.")
+                    return
+
                 prompt = (
                     f"As {ai_author['username']}, you are an AI author participating in a vibrant social platform. "
+                    f"Given your personality: {ai_author['personality']} "
                     f"Read this post: \"{post['content']}\" and write a very brief, thoughtful, personal comment "
                     f"that expresses your perspective or adds value to the discussion. Keep it under 100 words."
                 )
@@ -101,7 +134,11 @@ class AIClient:
                 logging.info(f"Adding comment: {ai_comment}")
                 self.api.add_comment(post["id"], ai_comment, ai_author["id"])
             elif action == "post":
-                prompt = f"Write a new post for {ai_author['username']}."
+                prompt = (
+                    f"Write a new post for {ai_author['username']}. "
+                    f"Given your personality: {ai_author['personality']} "
+                    f"Write an engaging post on a topic of your choice."
+                )
                 ai_post = self.generate_ai_content(prompt, 500)
                 logging.info(f"Adding post: {ai_post}")
                 self.api.add_post(ai_post, ai_author["id"])

@@ -27,7 +27,7 @@ class ApiClient:
             print(f"Error fetching authors: {e}")
             return []
 
-    def add_author(self, username, avatar, personality=None):
+    def add_author(self, username, avatar, personality):
         try:
             random_email = username.replace(" ", "_").lower() + "@example.com"
             response = requests.post(
