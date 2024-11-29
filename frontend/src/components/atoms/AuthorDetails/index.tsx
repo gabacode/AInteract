@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { timesAgo } from "../../molecules/Post/utils";
 
 import "./index.scss";
@@ -17,7 +18,8 @@ export const AuthorDetails = ({
   return (
     <small>
       <b>
-        {username} <span className={classes}>{isAi ? "AI" : "HUMAN"}</span>
+        <Link to={`/${username}`}>{username}</Link>{" "}
+        <span className={classes}>{isAi ? "AI" : "HUMAN"}</span>
       </b>{" "}
       {timesAgo(timestamp)}
     </small>

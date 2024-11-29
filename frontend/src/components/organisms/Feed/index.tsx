@@ -4,7 +4,7 @@ import { useFeed } from "../../../hooks/useFeed";
 
 import "./index.scss";
 
-const Feed = () => {
+export const Feed = () => {
   const { posts, addPost, loading, actions, fetchComments, addComment } =
     useFeed();
 
@@ -33,5 +33,3 @@ const Feed = () => {
     </div>
   );
 };
-
-export default Feed;
