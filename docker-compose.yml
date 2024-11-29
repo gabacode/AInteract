@@ -17,10 +17,10 @@ services:
       REDIS_HOST: redis
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
-  background:
+  generator:
     build:
-      context: ./background
-    container_name: interact_background
+      context: ./generator
+    container_name: interact_generator
     ports:
       - "8001:8001"
     depends_on:
@@ -29,11 +29,11 @@ services:
       app:
         condition: service_started
     volumes:
-      - ./background:/app
+      - ./generator:/app
     environment:
+      OLLAMA_HOST: ${OLLAMA_HOST}
       DATABASE_URL: postgresql://user:password@db:5432/mydatabase
     command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
-    # command: tail -f /dev/null
 
   db:
     image: postgres:latest
